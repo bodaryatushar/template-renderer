@@ -10,7 +10,6 @@ The goal of the project is to render Angular template in React.
 Write Angular template like
 
 ```html
-<pre>
 <div ng-show="list.length >= 1">
     <h3 ng-if="isHeader">Users list</h3>
     <div ng-repeat="item in list track by id">
@@ -21,7 +20,6 @@ Write Angular template like
     <button>Submit</button> <br /><br />
     <img ng-src="https://www.gravatar.com/avatar/{{image}}" />
 </div>
-</pre>
 ```
 
 Context like
