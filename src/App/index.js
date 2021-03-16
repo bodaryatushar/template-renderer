@@ -11,7 +11,13 @@ function App() {
   function getContext() {
     try {
       const ctx = JSON.parse(context);
-      return { ...ctx, __date: e => e, __uppercase: e => e.toUpperCase(), __t: e => e};
+      return { ...ctx, __date: e => e, __uppercase: e => e.toUpperCase(), __t: e => e,$fmt: key => {
+        const value = ctx[key];
+        if (value === undefined || value === null) {
+        return '';
+        }
+        return value;
+        }};
     } catch (e) {
       return {};
     }

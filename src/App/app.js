@@ -84,8 +84,8 @@ export const ATTR_EVALUATOR = {
       })
       return context => {
         return parsers.map(parser => parser(context));
-      }     
     }
+  }
     const parser = getTemplateParser(val);
     return context => {
       return parser(context);
@@ -114,6 +114,14 @@ export const ATTR_EVALUATOR = {
     return context => {
       return parser(context);
     };
+  },
+  [ATTRIBUTES.translate]: val => {
+    const parser = getTemplateParser(val);
+    return context => {
+      const value = parser(context);
+      const p = getTemplateParser(`{{__t('${value}')}}`);
+      return p(context)
+    }
   }
 };
 
@@ -137,9 +145,20 @@ function resolveFilter(match) {
 function process(root) {
   function processElement(element) {
     if (element === undefined) return;
-    const { value = "", tagName, attrs = [], childNodes } = element;
+    const { value = "", tagName,  } = element;
+    let { attrs = [], childNodes } = element
     let props = {};
     let classes = [];
+
+    //for  x-translate
+    attrs = attrs.map(a => {
+      if(a.name === ATTRIBUTES.translate) {
+        let value = childNodes.find(c => c.value)
+        childNodes = childNodes.map(c => c.value ? '' : c).filter(c => c !== '')
+        return {name: a.name, value: value.value}
+      }
+      return a;
+    })
 
     const remainingAttr = attrs.filter(
       ({ name, value }) => !ATTR_EVALUATOR[name]
@@ -149,8 +168,6 @@ function process(root) {
         classes.push(value);
       } else if (name === HTML_ATTRIBUTES.style) {
         props[name] = getStyleObject(value);
-      } else if(name === ATTRIBUTES.translate) {
-        return false;
       } else {
         props[name] = value;
       }
@@ -219,13 +236,14 @@ function process(root) {
               props.dangerouslySetInnerHTML = { __html: result };
           } else if(attr === HTML_ATTRIBUTES.data) {
             props.data = result;
+          } else if(attr === ATTRIBUTES.translate) {
+            props.children = result
           }
         });
-        let allClasses = (classes.concat(ngClasses)).filter(a => a !== '');
+        let allClasses = (classes.concat(ngClasses))
         if (allClasses.length > 0) {
-          props.className = classNames(allClasses);
+          props.className = classNames(allClasses.filter(c => c !== ''));
         }
-
         return showIf
           ? reactComponent(
               element,
@@ -269,20 +287,12 @@ function process(root) {
 
 function generateTree(root) {
   function processElement({ value, tagName, attrs, childNodes = [] },isTranslate) {
-    const translatetAttr = attrs && attrs.filter(a => a.name === 'x-translate')
     if (value === "\n") return;
-    if(value) {
-      if(isTranslate) {
-        const isExpression = value && value.trim().startsWith('{{')
-        const val = isExpression ? `{{__t(${value.replace('{{','').replace('}}','')})}}` : `{{__t('${value}')}}` ;
-        return {value: val}
-      }
-      return value;
-    }
+    if(value) return { value }
     return {
       tagName,
       attrs,
-      childNodes: childNodes.map(c => processElement(c,translatetAttr.length > 0)).filter(c => c)
+      childNodes: childNodes.map(c => processElement(c)).filter(c => c)
     };
   }
   return processElement(root);

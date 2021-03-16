@@ -35,7 +35,7 @@ export const getTemplateParser = str => {
   const resFn = parseSafe("`" + text + "`");
   return (...args) => {
     const result = resFn(...args);
-    return result.replace(/undefined/g, "");
+    return result.replace(/undefined/g, "").replace(/null/g,"");
   };
 };
 
