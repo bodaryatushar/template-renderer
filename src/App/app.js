@@ -1,8 +1,8 @@
 import React from "react";
 import parse5 from "parse5";
-import get from "lodash/get";
+import {get,isEmpty} from "lodash";
 import { ATTRIBUTES } from "./util";
-import { getTemplateParser, getExprParser, isObject,isArray } from "./util";
+import { getTemplateParser, getExprParser, isObject, isArray } from "./util";
 import classNames from "classnames";
 
 const REACT_COMPONENTS = [];
@@ -17,49 +17,49 @@ function reactComponent(element, _props = {}, _component) {
 export const ATTR_EVALUATOR = {
   [ATTRIBUTES.if]: val => {
     const parser = getExprParser(val);
-    return (context) => {
+    return context => {
       return parser(context);
     };
   },
   [ATTRIBUTES.show]: val => {
     const parser = getExprParser(val);
-    return (context) => {
+    return context => {
       const show = parser(context);
       if (!show) return "hide";
       else return "";
     };
   },
   [ATTRIBUTES.click]: val => {
-    return (context) => val;
+    return context => val;
   },
   [ATTRIBUTES.bind]: val => {
-    return (context) => {
+    return context => {
       const value = get(context, val);
       return value;
     };
   },
   [ATTRIBUTES.href]: val => {
     const parser = getTemplateParser(val);
-    return (context) => {
+    return context => {
       return parser(context);
     };
   },
   [ATTRIBUTES.src]: val => {
     const parser = getTemplateParser(val);
-    return (context) => {
+    return context => {
       return parser(context);
     };
   },
   [ATTRIBUTES.readonly]: val => {
     const parser = getExprParser(val);
-    return (context) => {
+    return context => {
       return parser(context);
     };
   },
   [ATTRIBUTES.class]: val => {
     if (isObject(val) || isArray(val)) {
       const parser = getExprParser(val);
-      return (context) => {
+      return context => {
         return parser(context);
       };
     } else {
@@ -106,7 +106,10 @@ function process(root) {
 
         attrEvals.forEach(attrEval => {
           const { attr, eval: evaluate } = attrEval;
-          const result = evaluate(context);
+          let result = ''
+          if(!isEmpty(context)) {
+             result = evaluate(context);
+          }
           if (attr === ATTRIBUTES.if && (showIf = result) === false) {
             return;
           } else if (attr === ATTRIBUTES.show) {
