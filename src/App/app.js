@@ -49,6 +49,12 @@ export const ATTR_EVALUATOR = {
       return parser(context);
     };
   },
+  [ATTRIBUTES.readonly]: val => {
+    const parser = getExprParser(val);
+    return (node, context) => {
+      return parser(context);
+    };
+  }
 };
 
 function process(root) {
@@ -106,6 +112,8 @@ function process(root) {
             props.href = result;
           } else if(attr === ATTRIBUTES.src) {
             props.src = result;
+          } else if(attr === ATTRIBUTES.readonly) {
+            props.readOnly = result
           }
         });
         

@@ -6,6 +6,7 @@ export const ATTRIBUTES = {
     bind: 'ng-bind',
     href: 'ng-href',
     src: 'ng-src',
+    readonly: 'ng-readonly',
   };
 
   const getFn = (...params) => new Function(...params); // eslint-disable-line
