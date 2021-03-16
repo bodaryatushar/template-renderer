@@ -64,24 +64,43 @@ export const ATTR_EVALUATOR = {
   }
 };
 
+function resolveFilter(match) {
+  let arr = match
+    .replace("{{", "")
+    .replace("}}", "")
+    .split("|");
+  let code = arr.shift();
+  arr.forEach(a => {
+    let [filterName, value] = a.split(":");
+    if (value) {
+      code = `__${filterName.trim()}(${code},${value})`;
+    } else {
+      code = `__${filterName.trim()}(${code})`;
+    }
+  });
+  return "{{" + code + "}}";
+}
+
 function process(root) {
   function processElement(element) {
-    if(element === undefined) return;
+    if (element === undefined) return;
     const { value = "", tagName, attrs = [], childNodes } = element;
     let props = {};
-    let classes= [];
+    let classes = [];
 
-    const remainingAttr = attrs.filter(({ name, value }) => !ATTR_EVALUATOR[name]);
-    remainingAttr.forEach(({name,value}) => {
-      if(name === 'class') {
+    const remainingAttr = attrs.filter(
+      ({ name, value }) => !ATTR_EVALUATOR[name]
+    );
+    remainingAttr.forEach(({ name, value }) => {
+      if (name === "class") {
         classes.push(value);
-      } else if(name === 'style') {
-        props[name] = getStyleObject(value)
+      } else if (name === "style") {
+        props[name] = getStyleObject(value);
       } else {
-        props[name]= value;
+        props[name] = value;
       }
-    })
-    
+    });
+
     const attrEvals = attrs
       .filter(({ name, value }) => ATTR_EVALUATOR[name])
       .map(({ name, value }) => ({
@@ -105,13 +124,14 @@ function process(root) {
       });
     } else {
       const content = value.trim();
-      const parser = content ? getTemplateParser(content) : null;
+      let code = content.replace(/\{\{(.*?)\}\}/g, resolveFilter);
+      const parser = content ? getTemplateParser(code) : null;
       renderProps = context => (parser ? { children: parser(context) } : {});
     }
 
     const ReactComponent = (() => {
       function HTMLComponent({ context }) {
-        let ngClasses = []
+        let ngClasses = [];
         let showIf = true;
 
         attrEvals.forEach(attrEval => {
@@ -149,7 +169,7 @@ function process(root) {
         return showIf
           ? reactComponent(
               element,
-              { ...renderProps(context), ...props},
+              { ...renderProps(context), ...props },
               (REACT_COMPONENTS.includes(tagName) || !tagName) && React.Fragment
             )
           : null;
@@ -173,7 +193,7 @@ function process(root) {
                 context={{
                   ...context,
                   [itemKey]: item,
-                  $index: i,
+                  $index: i
                 }}
               />
             ))}
@@ -199,12 +219,39 @@ function generateTree(root) {
   }
   return processElement(root);
 }
-export default function(template, context) {
+
+function parseTemplate(template, context) {
   const { childNodes = [] } = parse5.parseFragment(template);
   const tree = generateTree({
-    tagName: '',
+    tagName: "",
     attrs: [],
     childNodes
   });
   return process(tree);
+}
+
+export function useReactParser(template) {
+  const [ReactComponent, setReactComponent] = React.useState(() => () => null);
+  React.useEffect(() => {
+    if (template) {
+      try {
+        const result = parseTemplate(template.trim());
+        setReactComponent(() => result);
+      } catch (err) {
+        setReactComponent(
+          () =>
+            function({ context = {} }) {
+              return (
+                <div>
+                  {" "}
+                  <h4> Record: {context.record.id} </h4>{" "}
+                </div>
+              );
+            }
+        );
+        console.log("template parse", err);
+      }
+    }
+  }, [template]);
+  return ReactComponent;
 }

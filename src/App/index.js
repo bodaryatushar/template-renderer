@@ -1,47 +1,56 @@
 import React from "react";
-import parseTemplateToComponent from './app'
+import { useReactParser } from "./app";
 import "./index.css";
 
 function App() {
   const [template, setTemplate] = React.useState("");
   const [context, setContext] = React.useState("");
-  const [ReactComponent, setReactComponent] = React.useState(null);
+  const [parse, setParse] = React.useState(false);
+  const TemplateComponent = useReactParser(template);
 
   function getContext() {
     try {
-      return JSON.parse(context);
-    } catch(e) {
-      return {}
+      const ctx = JSON.parse(context);
+      return { ...ctx, __date: e => e, __uppercase: e => e.toUpperCase() };
+    } catch (e) {
+      return {};
     }
   }
 
   function doParse() {
-    const result = parseTemplateToComponent(template, context);  
-    setReactComponent(() => result)
+    setParse(true);
   }
 
   return (
     <div className="flex">
       <div>
         <label>Template: </label>
-        <TextInput name="template" value={template} onChange={setTemplate} />
-        Context: <TextInput name="context" value={context} onChange={setContext} />
-        
+        <TextInput
+          name="template"
+          value={template}
+          onChange={setTemplate}
+          doParse={setParse}
+        />
+        Context:{" "}
+        <TextInput
+          name="context"
+          value={context}
+          onChange={setContext}
+          doParse={setParse}
+        />
         <button onClick={() => doParse()}>Parse</button>
       </div>
-      <div style={{margin: '0px 10px   0px 10px'}}>
-      Output :
-      <div style={{margin: '0px 10px 0px 20px'}}>
-        {
-          ReactComponent && <ReactComponent context={getContext()}/>
-        }
-      </div>
+      <div style={{ margin: "0px 10px   0px 10px" }}>
+        Output :
+        <div style={{ margin: "0px 10px 0px 20px" }}>
+          {parse && <TemplateComponent context={getContext()} />}
+        </div>
       </div>
     </div>
   );
 }
 
-function TextInput({ name, value, onChange }) {
+function TextInput({ name, value, onChange, doParse }) {
   React.useEffect(() => {
     onChange(localStorage.getItem(name) || "");
   }, [name, onChange]);
@@ -51,6 +60,7 @@ function TextInput({ name, value, onChange }) {
   }, [name, value]);
 
   function handleChange(e) {
+    doParse(false);
     onChange(e.target.value);
   }
   return <textarea spellCheck="false" value={value} onChange={handleChange} />;
