@@ -2,7 +2,8 @@ import React from "react";
 import parse5 from "parse5";
 import get from "lodash/get";
 import { ATTRIBUTES } from "./util";
-import { getTemplateParser, getExprParser } from "./util";
+import { getTemplateParser, getExprParser, isObject,isArray } from "./util";
+import classNames from "classnames";
 
 const REACT_COMPONENTS = [];
 
@@ -16,44 +17,54 @@ function reactComponent(element, _props = {}, _component) {
 export const ATTR_EVALUATOR = {
   [ATTRIBUTES.if]: val => {
     const parser = getExprParser(val);
-    return (node, context) => {
+    return (context) => {
       return parser(context);
     };
   },
   [ATTRIBUTES.show]: val => {
     const parser = getExprParser(val);
-    return (node, context) => {
+    return (context) => {
       const show = parser(context);
-      if(!show) return "hide"
+      if (!show) return "hide";
       else return "";
     };
   },
   [ATTRIBUTES.click]: val => {
-    return (node,context) => val;
+    return (context) => val;
   },
   [ATTRIBUTES.bind]: val => {
-    return (node, context) => {
+    return (context) => {
       const value = get(context, val);
-      return value
+      return value;
     };
   },
   [ATTRIBUTES.href]: val => {
     const parser = getTemplateParser(val);
-    return (node, context) => {
+    return (context) => {
       return parser(context);
     };
   },
   [ATTRIBUTES.src]: val => {
     const parser = getTemplateParser(val);
-    return (node, context) => {
+    return (context) => {
       return parser(context);
     };
   },
   [ATTRIBUTES.readonly]: val => {
     const parser = getExprParser(val);
-    return (node, context) => {
+    return (context) => {
       return parser(context);
     };
+  },
+  [ATTRIBUTES.class]: val => {
+    if (isObject(val) || isArray(val)) {
+      const parser = getExprParser(val);
+      return (context) => {
+        return parser(context);
+      };
+    } else {
+      return () => val;
+    }
   }
 };
 
@@ -91,36 +102,38 @@ function process(root) {
     const ReactComponent = (() => {
       function HTMLComponent({ context }) {
         let showIf = true;
-        let props = {}
+        let props = {};
 
         attrEvals.forEach(attrEval => {
           const { attr, eval: evaluate } = attrEval;
-          const result = evaluate(tagName, context);
+          const result = evaluate(context);
           if (attr === ATTRIBUTES.if && (showIf = result) === false) {
             return;
-          } else if(attr === ATTRIBUTES.show) {
+          } else if (attr === ATTRIBUTES.show) {
             props.className = result;
-          } else if(attr === ATTRIBUTES.click) {
+          } else if (attr === ATTRIBUTES.click) {
             props.onClick = () => result;
-          } else if(attr === ATTRIBUTES.bind) {
-            if(tagName === 'input') {
-              props.value = result
+          } else if (attr === ATTRIBUTES.bind) {
+            if (tagName === "input") {
+              props.value = result;
             } else {
               props.children = result;
             }
-          } else if(attr === ATTRIBUTES.href) {
+          } else if (attr === ATTRIBUTES.href) {
             props.href = result;
-          } else if(attr === ATTRIBUTES.src) {
+          } else if (attr === ATTRIBUTES.src) {
             props.src = result;
-          } else if(attr === ATTRIBUTES.readonly) {
-            props.readOnly = result
+          } else if (attr === ATTRIBUTES.readonly) {
+            props.readOnly = result;
+          } else if (attr === ATTRIBUTES.class) {
+            props.className = classNames(result);
           }
         });
-        
+
         return showIf
           ? reactComponent(
               element,
-              {...renderProps(context),...props},
+              { ...renderProps(context), ...props },
               (REACT_COMPONENTS.includes(tagName) || !tagName) && React.Fragment
             )
           : null;
