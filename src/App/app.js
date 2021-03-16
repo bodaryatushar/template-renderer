@@ -72,10 +72,11 @@ export const ATTR_EVALUATOR = {
     };
   },
   [ATTRIBUTES.class]: val => {
-    if(isObject(val)) {
-      return evaluateObject(val)
-    } else if(isArray(val.trim())) {
-      const classes = val.replace('[','').replace(']','').split(',');
+    const value = val && val.trim(); 
+    if(isObject(value)) {
+      return evaluateObject(value)
+    } else if(isArray(value)) {
+      const classes = value.replace('[','').replace(']','').split(',');
       const parsers = classes.map(c => {
         if(isObject(c.trim())) {
           return evaluateObject(c.trim())
@@ -119,10 +120,9 @@ export const ATTR_EVALUATOR = {
     const parser = getTemplateParser(val);
     return context => {
       const value = parser(context);
-      const p = getTemplateParser(`{{__t('${value}')}}`);
-      return p(context)
-    }
-  }
+      return context.__t(`${value}`);
+    };
+  },
 };
 
 function resolveFilter(match) {
@@ -150,7 +150,7 @@ function process(root) {
     let props = {};
     let classes = [];
 
-    //for  x-translate
+    // for  x-translate
     attrs = attrs.map(a => {
       if(a.name === ATTRIBUTES.translate) {
         let value = childNodes.find(c => c.value)
@@ -203,7 +203,7 @@ function process(root) {
 
     const ReactComponent = (() => {
       function HTMLComponent({ context }) {
-        let ngClasses = [];
+          let ngClasses = [];
         let showIf = true;
 
         attrEvals.forEach(attrEval => {
@@ -286,7 +286,7 @@ function process(root) {
 }
 
 function generateTree(root) {
-  function processElement({ value, tagName, attrs, childNodes = [] },isTranslate) {
+  function processElement({ value, tagName, attrs, childNodes = [] }) {
     if (value === "\n") return;
     if(value) return { value }
     return {
