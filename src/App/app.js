@@ -1,5 +1,6 @@
 import React from "react";
 import parse5 from "parse5";
+import treeAdapters from 'parse5/lib/tree-adapters/default'
 import { get, isEmpty } from "lodash";
 import { ATTRIBUTES, HTML_ATTRIBUTES } from "./util";
 import { getTemplateParser, getExprParser, getStyleObject,isObject,isArray,stringToObject } from "./util";
@@ -29,12 +30,22 @@ function evaluateObject(val) {
       };
 }
 
+function templateParser(val) {
+  const parser = getTemplateParser(val);
+  return context => {
+    return parser(context);
+  };
+}
+
+function exprParser(val) {
+  const parser = getExprParser(val);
+  return context => {
+    return parser(context);
+  };
+}
 export const ATTR_EVALUATOR = {
   [ATTRIBUTES.if]: val => {
-    const parser = getExprParser(val);
-    return context => {
-      return parser(context);
-    };
+    return exprParser(val)
   },
   [ATTRIBUTES.show]: val => {
     const parser = getExprParser(val);
@@ -54,22 +65,13 @@ export const ATTR_EVALUATOR = {
     };
   },
   [ATTRIBUTES.href]: val => {
-    const parser = getTemplateParser(val);
-    return context => {
-      return parser(context);
-    };
+    return templateParser(val)
   },
   [ATTRIBUTES.src]: val => {
-    const parser = getTemplateParser(val);
-    return context => {
-      return parser(context);
-    };
+    return templateParser(val)
   },
   [ATTRIBUTES.readonly]: val => {
-    const parser = getExprParser(val);
-    return context => {
-      return parser(context);
-    };
+    return exprParser(val)
   },
   [ATTRIBUTES.class]: val => {
     const value = val && val.trim(); 
@@ -78,43 +80,25 @@ export const ATTR_EVALUATOR = {
     } else if(isArray(value)) {
       const classes = value.replace('[','').replace(']','').split(',');
       const parsers = classes.map(c => {
-        if(isObject(c.trim())) {
-          return evaluateObject(c.trim())
-        }
         return () => c
       })
       return context => {
         return parsers.map(parser => parser(context));
     }
   }
-    const parser = getTemplateParser(val);
-    return context => {
-      return parser(context);
-    };
+    return templateParser(val)
   },
   [ATTRIBUTES.bindHTML]: val => {
-    const parser = getExprParser(val);
-    return context => {
-      return parser(context);
-    };
+    return exprParser(val)
   },
   [HTML_ATTRIBUTES.href]: val => {
-    const parser = getTemplateParser(val);
-    return context => {
-      return parser(context);
-    };
+    return templateParser(val)
   },
   [HTML_ATTRIBUTES.src]: val => {
-    const parser = getTemplateParser(val);
-    return context => {
-      return parser(context);
-    };
+    return templateParser(val)
   },
   [HTML_ATTRIBUTES.data]: val => {
-    const parser = getTemplateParser(val);
-    return context => {
-      return parser(context);
-    };
+    return templateParser(val)
   },
   [ATTRIBUTES.translate]: val => {
     const parser = getTemplateParser(val);
@@ -145,7 +129,7 @@ function resolveFilter(match) {
 function process(root) {
   function processElement(element) {
     if (element === undefined) return;
-    const { value = "", tagName,  } = element;
+    const { value = "", tagName, element: ele } = element;
     let { attrs = [], childNodes } = element
     let props = {};
     let classes = [];
@@ -161,7 +145,7 @@ function process(root) {
     })
 
     const remainingAttr = attrs.filter(
-      ({ name, value }) => !ATTR_EVALUATOR[name]
+      ({ name }) => !ATTR_EVALUATOR[name]
     );
     remainingAttr.forEach(({ name, value }) => {
       if (name === HTML_ATTRIBUTES.class) {
@@ -174,7 +158,7 @@ function process(root) {
     });
 
     const attrEvals = attrs
-      .filter(({ name, value }) => ATTR_EVALUATOR[name])
+      .filter(({ name }) => ATTR_EVALUATOR[name])
       .map(({ name, value }) => ({
         attr: name,
         eval: ATTR_EVALUATOR[name](value)
@@ -203,6 +187,7 @@ function process(root) {
 
     const ReactComponent = (() => {
       function HTMLComponent({ context }) {
+        try {
           let ngClasses = [];
         let showIf = true;
 
@@ -251,6 +236,16 @@ function process(root) {
               (REACT_COMPONENTS.includes(tagName) || !tagName) && React.Fragment
             )
           : null;
+        } catch(err) {
+          if(ele.nodeName === '#document-fragment') {
+            return <div style={{color: 'red'}}>{parse5.serialize(ele)}</div>
+          } else {
+            const docFragment = treeAdapters.createDocumentFragment();
+            treeAdapters.appendChild(docFragment, ele);
+            return <div style={{color: 'red'}}>{parse5.serialize(docFragment)}</div>
+          }
+        }
+          
       }
       return HTMLComponent;
     })();
@@ -286,13 +281,15 @@ function process(root) {
 }
 
 function generateTree(root) {
-  function processElement({ value, tagName, attrs, childNodes = [] }) {
+  function processElement(element) {
+    const { value, tagName, attrs, childNodes = [] } = element;
     if (value === "\n") return;
     if(value) return { value }
     return {
       tagName,
       attrs,
-      childNodes: childNodes.map(c => processElement(c)).filter(c => c)
+      childNodes: childNodes.map(c => processElement(c)).filter(c => c),
+      element, 
     };
   }
   return processElement(root);
