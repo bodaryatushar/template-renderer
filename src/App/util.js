@@ -10,15 +10,16 @@ export const ATTRIBUTES = {
   src: "ng-src",
   readonly: "ng-readonly",
   class: "ng-class",
+  bindHTML: "ng-bind-html",
   translate: "x-translate",
-  bindHTML: "ng-bind-html"
 };
 
 export const HTML_ATTRIBUTES = {
   href: "href",
   src: "src",
   class: "class",
-  style: "style"
+  style: "style",
+  data: "data",
 };
 
 const getFn = (...params) => new Function(...params); // eslint-disable-line

@@ -109,6 +109,12 @@ export const ATTR_EVALUATOR = {
       return parser(context);
     };
   },
+  [HTML_ATTRIBUTES.data]: val => {
+    const parser = getTemplateParser(val);
+    return context => {
+      return parser(context);
+    };
+  }
 };
 
 function resolveFilter(match) {
@@ -211,6 +217,8 @@ function process(root) {
             ngClasses.push(result);
           } else if(attr === ATTRIBUTES.bindHTML) {
               props.dangerouslySetInnerHTML = { __html: result };
+          } else if(attr === HTML_ATTRIBUTES.data) {
+            props.data = result;
           }
         });
         let allClasses = (classes.concat(ngClasses)).filter(a => a !== '');
@@ -286,14 +294,14 @@ function replaceTag(str){
 }
 
 function parseTemplate(template) {
-  const newTemplate = template.replace(/<([^/>]+)\/>/g, replaceTag);
-  const { childNodes = [] } = parse5.parseFragment(newTemplate);
-  const tree = generateTree({
-    tagName: "",
-    attrs: [],
-    childNodes
-  });
-  return process(tree);
+    const newTemplate = template.replace(/<([^/>]+)\/>/g, replaceTag);
+    const { childNodes = [] } = parse5.parseFragment(newTemplate);
+    const tree = generateTree({
+      tagName: "",
+      attrs: [],
+      childNodes
+    });
+    return process(tree);
 }
 
 export function useReactParser(template) {
