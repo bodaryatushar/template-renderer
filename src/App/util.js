@@ -1,3 +1,5 @@
+import { parseSafe} from './parser'
+
 export const ATTRIBUTES = {
   repeat: "ng-repeat",
   if: "ng-if",
@@ -19,11 +21,14 @@ export const getTemplateParser = str => {
   if (!text.includes("${")) {
     return () => text;
   }
-  return getFn("record", "with(record) { return `" + text + "`; } ");
+  return parseSafe('`' + text + '`');
+  // return getFn("record", "with(record) { return `" + text + "`; } ");
 };
 
-export const getExprParser = str =>
-  getFn("record", "with(record) { return " + str + " ; } ");
+export const getExprParser = str => {
+  return parseSafe(str);
+  // getFn("record", "with(record) { return " + str + " ; } ");
+};
   
 export const isObject = v => v.startsWith("{");
 export const isArray = v => v.startsWith("[");
