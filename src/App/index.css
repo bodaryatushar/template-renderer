@@ -1,6 +1,6 @@
 textarea {
   height: 320px;
-  width: 540px;
+  width: 100%;
   display: block;
   margin: 10px;
 }

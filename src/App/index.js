@@ -16,22 +16,27 @@ function App() {
   }
 
   function doParse() {
-    const output = parseTemplateToComponent(template, context);
-    setReactComponent(() => output);
+    const result = parseTemplateToComponent(template, context);    
+    setReactComponent(() => result);
   }
 
   return (
     <div className="flex">
       <div>
+        <label>Template: </label>
         <TextInput name="template" value={template} onChange={setTemplate} />
-        <TextInput name="context" value={context} onChange={setContext} />
+        Context: <TextInput name="context" value={context} onChange={setContext} />
+        
         <button onClick={() => doParse()}>Parse</button>
       </div>
-      <div>
+      <div style={{margin: '0px 10px   0px 10px'}}>
+      Output :
+      <div style={{margin: '0px 10px 0px 20px'}}>
         {
           ReactComponent &&
           <ReactComponent context={getContext()} />
         }
+      </div>
       </div>
     </div>
   );

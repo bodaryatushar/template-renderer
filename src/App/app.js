@@ -1,8 +1,8 @@
 import React from "react";
 import parse5 from "parse5";
-import {get,isEmpty} from "lodash";
+import { get, isEmpty } from "lodash";
 import { ATTRIBUTES } from "./util";
-import { getTemplateParser, getExprParser, isObject, isArray } from "./util";
+import { getTemplateParser, getExprParser, getStyleObject } from "./util";
 import classNames from "classnames";
 
 const REACT_COMPONENTS = [];
@@ -57,21 +57,30 @@ export const ATTR_EVALUATOR = {
     };
   },
   [ATTRIBUTES.class]: val => {
-    if (isObject(val) || isArray(val)) {
-      const parser = getExprParser(val);
-      return context => {
-        return parser(context);
-      };
-    } else {
-      return () => val;
-    }
+    const parser = getExprParser(val);
+    return context => {
+      return parser(context);
+    };
   }
 };
 
 function process(root) {
   function processElement(element) {
     const { value = "", tagName, attrs = [], childNodes } = element;
+    let props = {};
+    let classes= [];
 
+    const remainingAttr = attrs.filter(({ name, value }) => !ATTR_EVALUATOR[name]);
+    remainingAttr.forEach(({name,value}) => {
+      if(name === 'class') {
+        classes.push(value);
+      } else if(name === 'style') {
+        props[name] = getStyleObject(value)
+      } else {
+        props[name]= value;
+      }
+    })
+    
     const attrEvals = attrs
       .filter(({ name, value }) => ATTR_EVALUATOR[name])
       .map(({ name, value }) => ({
@@ -102,18 +111,17 @@ function process(root) {
     const ReactComponent = (() => {
       function HTMLComponent({ context }) {
         let showIf = true;
-        let props = {};
 
         attrEvals.forEach(attrEval => {
           const { attr, eval: evaluate } = attrEval;
-          let result = ''
-          if(!isEmpty(context)) {
-             result = evaluate(context);
+          let result = "";
+          if (!isEmpty(context)) {
+            result = evaluate(context);
           }
           if (attr === ATTRIBUTES.if && (showIf = result) === false) {
             return;
           } else if (attr === ATTRIBUTES.show) {
-            props.className = result;
+            classes.push(result);
           } else if (attr === ATTRIBUTES.click) {
             props.onClick = () => result;
           } else if (attr === ATTRIBUTES.bind) {
@@ -129,14 +137,16 @@ function process(root) {
           } else if (attr === ATTRIBUTES.readonly) {
             props.readOnly = result;
           } else if (attr === ATTRIBUTES.class) {
-            props.className = classNames(result);
+            classes.push(result);
           }
         });
+
+        if (classes.length > 0) props.className = classNames(classes);
 
         return showIf
           ? reactComponent(
               element,
-              { ...renderProps(context), ...props },
+              { ...renderProps(context), ...props},
               (REACT_COMPONENTS.includes(tagName) || !tagName) && React.Fragment
             )
           : null;
