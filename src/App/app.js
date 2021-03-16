@@ -2,7 +2,7 @@ import React from "react";
 import parse5 from "parse5";
 import { get, isEmpty } from "lodash";
 import { ATTRIBUTES, HTML_ATTRIBUTES } from "./util";
-import { getTemplateParser, getExprParser, getStyleObject,isObject,isArray } from "./util";
+import { getTemplateParser, getExprParser, getStyleObject,isObject,isArray,stringToObject } from "./util";
 import classNames from "classnames";
 
 const REACT_COMPONENTS = [];
@@ -12,6 +12,21 @@ function reactComponent(element, _props = {}, _component) {
   const props = Object.assign({}, _props);
   const compName = _component || tagName.toLowerCase();
   return React.createElement(compName, props);
+}
+
+function evaluateObject(val) {
+ let classes = stringToObject(val)
+      const parser = getTemplateParser(JSON.stringify(classes));
+      return context => {
+        const result = parser(context);
+        classes = JSON.parse(result)
+        let temp = {}
+        for (const item in classes) {
+          const name = item.replace('\'','').replace('\'','')
+          temp[name] = classes[item] === "true" ? true : false
+        }
+        return classNames(temp);
+      };
 }
 
 export const ATTR_EVALUATOR = {
@@ -57,27 +72,19 @@ export const ATTR_EVALUATOR = {
     };
   },
   [ATTRIBUTES.class]: val => {
-    let classes = {};
     if(isObject(val)) {
-      const arr = val.replace('{','').replace('}','').split(',');
-      arr.forEach(a => {
-        const [code,value] = a.split(':');
-        classes[code.trim()] = '{{' + value + '}}'
-      })
-      const parser = getTemplateParser(JSON.stringify(classes));
-      return context => {
-        const result = parser(context);
-        classes = JSON.parse(result)
-        let temp = {}
-        for (const item in classes) {
-          const name = item.replace('\'','').replace('\'','')
-          temp[name] = classes[item] === "true" ? true : false
+      return evaluateObject(val)
+    } else if(isArray(val.trim())) {
+      const classes = val.replace('[','').replace(']','').split(',');
+      const parsers = classes.map(c => {
+        if(isObject(c.trim())) {
+          return evaluateObject(c.trim())
         }
-        return classNames(temp);
-      };
-    } else if(isArray(val)) {
-      const arr = val.replace('[','').replace(']','').split(',');
-      return () => classNames(arr);
+        return () => c
+      })
+      return context => {
+        return parsers.map(parser => parser(context));
+      }     
     }
     const parser = getTemplateParser(val);
     return context => {
@@ -96,7 +103,6 @@ export const ATTR_EVALUATOR = {
       return parser(context);
     };
   },
-
 
 };
 

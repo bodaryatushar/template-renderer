@@ -68,3 +68,16 @@ export const getStyleObject = str => {
 
   return style;
 };
+
+export const stringToObject = str => {
+  let classes = {};
+  const arr = str
+    .replace("{", "")
+    .replace("}", "")
+    .split(",");
+  arr.forEach(a => {
+    const [code, value] = a.split(":");
+    classes[code.trim()] = "{{" + value + "}}";
+  });
+  return classes;
+};
