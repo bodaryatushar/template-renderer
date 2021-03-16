@@ -5,7 +5,7 @@ import "./index.css";
 function App() {
   const [template, setTemplate] = React.useState("");
   const [context, setContext] = React.useState("");
-  const [reactComponent, setReactComponent] = React.useState([]);
+  const [ReactComponent, setReactComponent] = React.useState(null);
 
   function getContext() {
     try {
@@ -16,12 +16,8 @@ function App() {
   }
 
   function doParse() {
-    let components = [];
-    const results = parseTemplateToComponent(template, context);  
-    results.forEach(r => {
-      components.push(r)
-    })
-    setReactComponent(components.filter(a => a !== undefined));
+    const result = parseTemplateToComponent(template, context);  
+    setReactComponent(() => result)
   }
 
   return (
@@ -37,9 +33,7 @@ function App() {
       Output :
       <div style={{margin: '0px 10px 0px 20px'}}>
         {
-          reactComponent.length > 0 && reactComponent.map((Component,index) => 
-             <Component context={getContext()} key={index}/>
-          )
+          ReactComponent && <ReactComponent context={getContext()}/>
         }
       </div>
       </div>

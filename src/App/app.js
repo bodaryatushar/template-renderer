@@ -123,7 +123,7 @@ function process(root) {
           if (attr === ATTRIBUTES.if && (showIf = result) === false) {
             return;
           } else if (attr === ATTRIBUTES.show) {
-            ngClasses.push(result);
+            result && ngClasses.push(result);
           } else if (attr === ATTRIBUTES.click) {
             props.onClick = () => result;
           } else if (attr === ATTRIBUTES.bind) {
@@ -200,11 +200,11 @@ function generateTree(root) {
   return processElement(root);
 }
 export default function(template, context) {
-  const parseHtml = parse5.parseFragment(template);
-  let elements = [];
-  parseHtml.childNodes.forEach(child => {
-    const tree = generateTree(child);
-    elements.push(process(tree));
-  })
-  return elements
+  const { childNodes = [] } = parse5.parseFragment(template);
+  const tree = generateTree({
+    tagName: '',
+    attrs: [],
+    childNodes
+  });
+  return process(tree);
 }
