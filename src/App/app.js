@@ -28,6 +28,9 @@ export const ATTR_EVALUATOR = {
       else return "";
     };
   },
+  [ATTRIBUTES.click]: val => {
+    return (node,context) => val;
+  }
 };
 
 function process(root) {
@@ -65,16 +68,19 @@ function process(root) {
       function HTMLComponent({ context }) {
         let showIf = true;
         let props = {}
-        attrEvals.every(attrEval => {
+
+        attrEvals.forEach(attrEval => {
           const { attr, eval: evaluate } = attrEval;
           const result = evaluate(tagName, context);
           if (attr === ATTRIBUTES.if && (showIf = result) === false) {
-            return false;
+            return;
           } else if(attr === ATTRIBUTES.show) {
             props.className = result;
+          } else if(attr === ATTRIBUTES.click) {
+            props.onClick = () => result;
           }
         });
-
+        
         return showIf
           ? reactComponent(
               element,
