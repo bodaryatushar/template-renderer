@@ -3,7 +3,8 @@ export const ATTRIBUTES = {
     if: 'ng-if',
     show: 'ng-show',
     click: 'ng-click',
-    bind: "ng-bind",
+    bind: 'ng-bind',
+    href: 'ng-href',
   };
 
   const getFn = (...params) => new Function(...params); // eslint-disable-line

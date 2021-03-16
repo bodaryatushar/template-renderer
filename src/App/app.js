@@ -36,6 +36,12 @@ export const ATTR_EVALUATOR = {
       const value = get(context, val);
       return value
     };
+  },
+  [ATTRIBUTES.href]: val => {
+    const parser = getTemplateParser(val);
+    return (node, context) => {
+      return parser(context);
+    };
   }
 };
 
@@ -90,6 +96,8 @@ function process(root) {
             } else {
               props.children = result;
             }
+          } else if(attr === ATTRIBUTES.href) {
+            props.href = result;
           }
         });
         
