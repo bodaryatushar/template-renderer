@@ -2,7 +2,7 @@ import React from "react";
 import parse5 from "parse5";
 import { get, isEmpty } from "lodash";
 import { ATTRIBUTES, HTML_ATTRIBUTES } from "./util";
-import { getTemplateParser, getExprParser, getStyleObject,isObject } from "./util";
+import { getTemplateParser, getExprParser, getStyleObject,isObject,isArray } from "./util";
 import classNames from "classnames";
 
 const REACT_COMPONENTS = [];
@@ -75,6 +75,9 @@ export const ATTR_EVALUATOR = {
         }
         return classNames(temp);
       };
+    } else if(isArray(val)) {
+      const arr = val.replace('[','').replace(']','').split(',');
+      return () => classNames(arr);
     }
     const parser = getTemplateParser(val);
     return context => {
@@ -156,7 +159,7 @@ function process(root) {
         ))
       });
     } else {
-      const content = value.trim();
+      const content = value;
       let code = content.replace(/\{\{(.*?)\}\}/g, resolveFilter);
       const parser = content ? getTemplateParser(code) : null;
       renderProps = context => (parser ? { children: parser(context) } : {});
@@ -176,12 +179,12 @@ function process(root) {
           if (attr === ATTRIBUTES.if && (showIf = result) === false) {
             return;
           } else if (attr === ATTRIBUTES.show) {
-            result && ngClasses.push(result);
+            ngClasses.push(result);
           } else if (attr === ATTRIBUTES.click) {
             props.onClick = () => result;
           } else if (attr === ATTRIBUTES.bind) {
             if (tagName === "input") {
-              props.value = result;
+              props.defaultValue = result;
             } else {
               props.children = result;
             }
@@ -195,9 +198,10 @@ function process(root) {
             ngClasses.push(result);
           }
         });
-
-        let allClasses = classes.concat(ngClasses);
-        if (allClasses.length > 0) props.className = classNames(allClasses);
+        let allClasses = (classes.concat(ngClasses)).filter(a => a !== '');
+        if (allClasses.length > 0) {
+          props.className = classNames(allClasses);
+        }
 
         return showIf
           ? reactComponent(
@@ -242,7 +246,7 @@ function process(root) {
 
 function generateTree(root) {
   function processElement({ value, tagName, attrs, childNodes = [] }) {
-    if (value == "\n") return;
+    if (value === "\n") return;
     if (value) return { value };
     return {
       tagName,

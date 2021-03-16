@@ -1,4 +1,4 @@
-import { parseSafe} from './parser'
+import { parseSafe } from "./parser";
 
 export const ATTRIBUTES = {
   repeat: "ng-repeat",
@@ -9,13 +9,13 @@ export const ATTRIBUTES = {
   href: "ng-href",
   src: "ng-src",
   readonly: "ng-readonly",
-  class: "ng-class",
+  class: "ng-class"
 };
 
 export const HTML_ATTRIBUTES = {
-  href: 'href',
-  src: 'src'
-}
+  href: "href",
+  src: "src"
+};
 
 const getFn = (...params) => new Function(...params); // eslint-disable-line
 
@@ -26,15 +26,18 @@ export const getTemplateParser = str => {
   if (!text.includes("${")) {
     return () => text;
   }
-  return parseSafe('`' + text + '`');
-  // return getFn("record", "with(record) { return `" + text + "`; } ");
+
+  const resFn = parseSafe("`" + text + "`");
+  return (...args) => {
+    const result = resFn(...args);
+    return result.replace(/undefined/g, "");
+  };
 };
 
 export const getExprParser = str => {
   return parseSafe(str);
-  // getFn("record", "with(record) { return " + str + " ; } ");
 };
-  
+
 export const isObject = v => v.startsWith("{");
 export const isArray = v => v.startsWith("[");
 
@@ -57,7 +60,7 @@ export const getStyleObject = str => {
     if (!property) return;
 
     const formattedProperty = formatStringToCamelCase(property.trim());
-    style[formattedProperty] = value.trim();
+    style[formattedProperty] = value.trim().replace("!important", "");
   });
 
   return style;
