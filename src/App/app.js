@@ -19,7 +19,15 @@ export const ATTR_EVALUATOR = {
     return (node, context) => {
       return parser(context);
     };
-  }
+  },
+  [ATTRIBUTES.show]: val => {
+    const parser = getExprParser(val);
+    return (node, context) => {
+      const show = parser(context);
+      if(!show) return "hide"
+      else return "";
+    };
+  },
 };
 
 function process(root) {
@@ -56,19 +64,21 @@ function process(root) {
     const ReactComponent = (() => {
       function HTMLComponent({ context }) {
         let showIf = true;
-
+        let props = {}
         attrEvals.every(attrEval => {
           const { attr, eval: evaluate } = attrEval;
           const result = evaluate(tagName, context);
           if (attr === ATTRIBUTES.if && (showIf = result) === false) {
             return false;
+          } else if(attr === ATTRIBUTES.show) {
+            props.className = result;
           }
         });
-        
+
         return showIf
           ? reactComponent(
               element,
-              renderProps(context),
+              {...renderProps(context),...props},
               (REACT_COMPONENTS.includes(tagName) || !tagName) && React.Fragment
             )
           : null;
