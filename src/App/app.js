@@ -91,6 +91,12 @@ export const ATTR_EVALUATOR = {
       return parser(context);
     };
   },
+  [ATTRIBUTES.bindHTML]: val => {
+    const parser = getExprParser(val);
+    return context => {
+      return parser(context);
+    };
+  },
   [HTML_ATTRIBUTES.href]: val => {
     const parser = getTemplateParser(val);
     return context => {
@@ -103,7 +109,6 @@ export const ATTR_EVALUATOR = {
       return parser(context);
     };
   },
-
 };
 
 function resolveFilter(match) {
@@ -204,6 +209,8 @@ function process(root) {
             props.readOnly = result;
           } else if (attr === ATTRIBUTES.class) {
             ngClasses.push(result);
+          } else if(attr === ATTRIBUTES.bindHTML) {
+              props.dangerouslySetInnerHTML = { __html: result };
           }
         });
         let allClasses = (classes.concat(ngClasses)).filter(a => a !== '');

@@ -10,7 +10,8 @@ export const ATTRIBUTES = {
   src: "ng-src",
   readonly: "ng-readonly",
   class: "ng-class",
-  translate: "x-translate"
+  translate: "x-translate",
+  bindHTML: "ng-bind-html"
 };
 
 export const HTML_ATTRIBUTES = {
