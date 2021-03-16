@@ -11,7 +11,7 @@ function App() {
   function getContext() {
     try {
       const ctx = JSON.parse(context);
-      return { ...ctx, __date: e => e, __uppercase: e => e.toUpperCase() };
+      return { ...ctx, __date: e => e, __uppercase: e => e.toUpperCase(), __t: e => e};
     } catch (e) {
       return {};
     }

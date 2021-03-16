@@ -128,10 +128,12 @@ function process(root) {
       ({ name, value }) => !ATTR_EVALUATOR[name]
     );
     remainingAttr.forEach(({ name, value }) => {
-      if (name === "class") {
+      if (name === HTML_ATTRIBUTES.class) {
         classes.push(value);
-      } else if (name === "style") {
+      } else if (name === HTML_ATTRIBUTES.style) {
         props[name] = getStyleObject(value);
+      } else if(name === ATTRIBUTES.translate) {
+        return false;
       } else {
         props[name] = value;
       }
@@ -245,20 +247,19 @@ function process(root) {
 }
 
 function generateTree(root) {
-  function processElement({ value, tagName, attrs, childNodes = [] }) {
+  function processElement({ value, tagName, attrs, childNodes = [] },isTranslate) {
+    const translatetAttr = attrs && attrs.filter(a => a.name === 'x-translate')
     if (value === "\n") return;
-    if (value) return { value };
+    if (value) return { value: isTranslate ? `{{__t('${value}')}}` : value };
     return {
       tagName,
       attrs,
-      childNodes: childNodes.map(c => processElement(c)).filter(c => c)
+      childNodes: childNodes.map(c => processElement(c,translatetAttr.length > 0)).filter(c => c)
     };
   }
   return processElement(root);
 }
 
-function parseTemplate(template, context) {
-  const { childNodes = [] } = parse5.parseFragment(template);
 function replaceTag(str){
   let closingTag = '',tag = ''
   const arr = str.split(' ')[0].match(/<([^/>]+)\/>/g)

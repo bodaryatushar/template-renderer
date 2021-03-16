@@ -9,12 +9,15 @@ export const ATTRIBUTES = {
   href: "ng-href",
   src: "ng-src",
   readonly: "ng-readonly",
-  class: "ng-class"
+  class: "ng-class",
+  translate: "x-translate"
 };
 
 export const HTML_ATTRIBUTES = {
   href: "href",
-  src: "src"
+  src: "src",
+  class: "class",
+  style: "style"
 };
 
 const getFn = (...params) => new Function(...params); // eslint-disable-line
