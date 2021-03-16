@@ -1,8 +1,8 @@
 import React from "react";
 import parse5 from "parse5";
 import { get, isEmpty } from "lodash";
-import { ATTRIBUTES } from "./util";
-import { getTemplateParser, getExprParser, getStyleObject } from "./util";
+import { ATTRIBUTES, HTML_ATTRIBUTES } from "./util";
+import { getTemplateParser, getExprParser, getStyleObject,isObject } from "./util";
 import classNames from "classnames";
 
 const REACT_COMPONENTS = [];
@@ -57,11 +57,44 @@ export const ATTR_EVALUATOR = {
     };
   },
   [ATTRIBUTES.class]: val => {
-    const parser = getExprParser(val);
+    let classes = {};
+    if(isObject(val)) {
+      const arr = val.replace('{','').replace('}','').split(',');
+      arr.forEach(a => {
+        const [code,value] = a.split(':');
+        classes[code.trim()] = '{{' + value + '}}'
+      })
+      const parser = getTemplateParser(JSON.stringify(classes));
+      return context => {
+        const result = parser(context);
+        classes = JSON.parse(result)
+        let temp = {}
+        for (const item in classes) {
+          const name = item.replace('\'','').replace('\'','')
+          temp[name] = classes[item] === "true" ? true : false
+        }
+        return classNames(temp);
+      };
+    }
+    const parser = getTemplateParser(val);
     return context => {
       return parser(context);
     };
-  }
+  },
+  [HTML_ATTRIBUTES.href]: val => {
+    const parser = getTemplateParser(val);
+    return context => {
+      return parser(context);
+    };
+  },
+  [HTML_ATTRIBUTES.src]: val => {
+    const parser = getTemplateParser(val);
+    return context => {
+      return parser(context);
+    };
+  },
+
+
 };
 
 function resolveFilter(match) {
@@ -152,9 +185,9 @@ function process(root) {
             } else {
               props.children = result;
             }
-          } else if (attr === ATTRIBUTES.href) {
+          } else if (attr === ATTRIBUTES.href || attr === HTML_ATTRIBUTES.href) {
             props.href = result;
-          } else if (attr === ATTRIBUTES.src) {
+          } else if (attr === ATTRIBUTES.src || attr === HTML_ATTRIBUTES.src) {
             props.src = result;
           } else if (attr === ATTRIBUTES.readonly) {
             props.readOnly = result;
