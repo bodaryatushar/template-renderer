@@ -259,6 +259,21 @@ function generateTree(root) {
 
 function parseTemplate(template, context) {
   const { childNodes = [] } = parse5.parseFragment(template);
+function replaceTag(str){
+  let closingTag = '',tag = ''
+  const arr = str.split(' ')[0].match(/<([^/>]+)\/>/g)
+  if(arr) {
+    closingTag = arr[0]
+  } else {
+    tag = str.replace(/\/>/g,'>')
+    closingTag = str.split(' ')[0].replace(/</g,'</') + '>';
+  }
+  return tag + closingTag;
+}
+
+function parseTemplate(template) {
+  const newTemplate = template.replace(/<([^/>]+)\/>/g, replaceTag);
+  const { childNodes = [] } = parse5.parseFragment(newTemplate);
   const tree = generateTree({
     tagName: "",
     attrs: [],
