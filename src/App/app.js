@@ -110,6 +110,7 @@ function process(root) {
 
     const ReactComponent = (() => {
       function HTMLComponent({ context }) {
+        let ngClasses = []
         let showIf = true;
 
         attrEvals.forEach(attrEval => {
@@ -121,7 +122,7 @@ function process(root) {
           if (attr === ATTRIBUTES.if && (showIf = result) === false) {
             return;
           } else if (attr === ATTRIBUTES.show) {
-            classes.push(result);
+            ngClasses.push(result);
           } else if (attr === ATTRIBUTES.click) {
             props.onClick = () => result;
           } else if (attr === ATTRIBUTES.bind) {
@@ -137,11 +138,12 @@ function process(root) {
           } else if (attr === ATTRIBUTES.readonly) {
             props.readOnly = result;
           } else if (attr === ATTRIBUTES.class) {
-            classes.push(result);
+            ngClasses.push(result);
           }
         });
 
-        if (classes.length > 0) props.className = classNames(classes);
+        let allClasses = classes.concat(ngClasses);
+        if (allClasses.length > 0) props.className = classNames(allClasses);
 
         return showIf
           ? reactComponent(
@@ -170,7 +172,7 @@ function process(root) {
                 context={{
                   ...context,
                   [itemKey]: item,
-                  $index: i
+                  $index: i,
                 }}
               />
             ))}
