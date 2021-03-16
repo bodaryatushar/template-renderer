@@ -271,7 +271,14 @@ function generateTree(root) {
   function processElement({ value, tagName, attrs, childNodes = [] },isTranslate) {
     const translatetAttr = attrs && attrs.filter(a => a.name === 'x-translate')
     if (value === "\n") return;
-    if (value) return { value: isTranslate ? `{{__t('${value}')}}` : value };
+    if(value) {
+      if(isTranslate) {
+        const isExpression = value && value.trim().startsWith('{{')
+        const val = isExpression ? `{{__t(${value.replace('{{','').replace('}}','')})}}` : `{{__t('${value}')}}` ;
+        return {value: val}
+      }
+      return value;
+    }
     return {
       tagName,
       attrs,
