@@ -42,7 +42,13 @@ export const ATTR_EVALUATOR = {
     return (node, context) => {
       return parser(context);
     };
-  }
+  },
+  [ATTRIBUTES.src]: val => {
+    const parser = getTemplateParser(val);
+    return (node, context) => {
+      return parser(context);
+    };
+  },
 };
 
 function process(root) {
@@ -98,6 +104,8 @@ function process(root) {
             }
           } else if(attr === ATTRIBUTES.href) {
             props.href = result;
+          } else if(attr === ATTRIBUTES.src) {
+            props.src = result;
           }
         });
         

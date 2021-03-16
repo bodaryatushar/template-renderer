@@ -5,6 +5,7 @@ export const ATTRIBUTES = {
     click: 'ng-click',
     bind: 'ng-bind',
     href: 'ng-href',
+    src: 'ng-src',
   };
 
   const getFn = (...params) => new Function(...params); // eslint-disable-line
