@@ -1,0 +1,17 @@
+textarea {
+  height: 320px;
+  width: 540px;
+  display: block;
+  margin: 10px;
+}
+
+.hide {
+  display: none !important;
+}
+
+.flex {
+  display: flex;
+}
+.flex > div {
+  flex: 1;
+}
