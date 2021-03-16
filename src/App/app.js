@@ -66,6 +66,7 @@ export const ATTR_EVALUATOR = {
 
 function process(root) {
   function processElement(element) {
+    if(element === undefined) return;
     const { value = "", tagName, attrs = [], childNodes } = element;
     let props = {};
     let classes= [];
@@ -200,7 +201,10 @@ function generateTree(root) {
 }
 export default function(template, context) {
   const parseHtml = parse5.parseFragment(template);
-  const root = parseHtml.childNodes[0];
-  const tree = generateTree(root);
-  return process(tree);
+  let elements = [];
+  parseHtml.childNodes.forEach(child => {
+    const tree = generateTree(child);
+    elements.push(process(tree));
+  })
+  return elements
 }
