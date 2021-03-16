@@ -2,20 +2,36 @@ import React from "react";
 import parse5 from "parse5";
 import get from "lodash/get";
 import { ATTRIBUTES } from "./util";
-import { getTemplateParser } from "./util";
+import { getTemplateParser, getExprParser } from "./util";
 
 const REACT_COMPONENTS = [];
 
 function reactComponent(element, _props = {}, _component) {
-  const  {tagName} = element
+  const { tagName } = element;
   const props = Object.assign({}, _props);
   const compName = _component || tagName.toLowerCase();
   return React.createElement(compName, props);
 }
 
+export const ATTR_EVALUATOR = {
+  [ATTRIBUTES.if]: val => {
+    const parser = getExprParser(val);
+    return (node, context) => {
+      return parser(context);
+    };
+  }
+};
+
 function process(root) {
   function processElement(element) {
-    const { value = "", tagName, attrs, childNodes } = element;
+    const { value = "", tagName, attrs = [], childNodes } = element;
+
+    const attrEvals = attrs
+      .filter(({ name, value }) => ATTR_EVALUATOR[name])
+      .map(({ name, value }) => ({
+        attr: name,
+        eval: ATTR_EVALUATOR[name](value)
+      }));
 
     let renderProps = () => ({});
 
@@ -40,6 +56,14 @@ function process(root) {
     const ReactComponent = (() => {
       function HTMLComponent({ context }) {
         let showIf = true;
+
+        attrEvals.every(attrEval => {
+          const { attr, eval: evaluate } = attrEval;
+          const result = evaluate(tagName, context);
+          if (attr === ATTRIBUTES.if && (showIf = result) === false) {
+            return false;
+          }
+        });
         
         return showIf
           ? reactComponent(
@@ -53,31 +77,29 @@ function process(root) {
     })();
 
     // for ng-repeat
-    if (attrs && attrs.length >= 0) {
-      const index = attrs.findIndex(a => a.name === ATTRIBUTES.repeat);
-      if (index >= 0) {
-        const [, itemKey, itemsKey, , key] = attrs[index].value.match(
-          /([^\s]+)\s+in\s+([^\s]+)(\s+track\s+by\s+([^\s]+))?/
+    const index = attrs && attrs.findIndex(a => a.name === ATTRIBUTES.repeat);
+    if (index >= 0) {
+      const [, itemKey, itemsKey, , key] = attrs[index].value.match(
+        /([^\s]+)\s+in\s+([^\s]+)(\s+track\s+by\s+([^\s]+))?/
+      );
+      function List({ context }) {
+        const data = get(context, itemsKey, []);
+        return (
+          <React.Fragment>
+            {data.map((item, i) => (
+              <ReactComponent
+                key={key ? item[key] : i}
+                context={{
+                  ...context,
+                  [itemKey]: item,
+                  $index: i
+                }}
+              />
+            ))}
+          </React.Fragment>
         );
-        function List({ context }) {
-          const data = get(context, itemsKey, []);
-          return (
-            <React.Fragment>
-              {data.map((item, i) => (
-                <ReactComponent
-                  key={key ? item[key] : i}
-                  context={{
-                    ...context,
-                    [itemKey]: item,
-                    $index: i
-                  }}
-                />
-              ))}
-            </React.Fragment>
-          );
-        }
-        return List;
       }
+      return List;
     }
     return ReactComponent;
   }

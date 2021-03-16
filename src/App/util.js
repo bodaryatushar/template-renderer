@@ -14,3 +14,6 @@ export const getTemplateParser = str => {
   }
   return getFn("record", "with(record) { return `" + text + "`; } ");
 }
+
+export const getExprParser = str =>
+  getFn("record", "with(record) { return " + str + " ; } ");
