@@ -30,6 +30,12 @@ export const ATTR_EVALUATOR = {
   },
   [ATTRIBUTES.click]: val => {
     return (node,context) => val;
+  },
+  [ATTRIBUTES.bind]: val => {
+    return (node, context) => {
+      const value = get(context, val);
+      return value
+    };
   }
 };
 
@@ -78,6 +84,12 @@ function process(root) {
             props.className = result;
           } else if(attr === ATTRIBUTES.click) {
             props.onClick = () => result;
+          } else if(attr === ATTRIBUTES.bind) {
+            if(tagName === 'input') {
+              props.value = result
+            } else {
+              props.children = result;
+            }
           }
         });
         

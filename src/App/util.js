@@ -2,7 +2,8 @@ export const ATTRIBUTES = {
     repeat: 'ng-repeat',
     if: 'ng-if',
     show: 'ng-show',
-    click: 'ng-click'
+    click: 'ng-click',
+    bind: "ng-bind",
   };
 
   const getFn = (...params) => new Function(...params); // eslint-disable-line
