@@ -6,7 +6,7 @@ The goal of the project is to render Angular template in React.
   <li>supposed you used Angular.js template in your application so we need to write that code in react manually and it is time consuming so that time template-renderer is useful to convert Angular.js template to React.js
   </li>
 
-## Usage
+## Example
 Write Angular template like
 
 ```html
